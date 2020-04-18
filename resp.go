@@ -1,4 +1,4 @@
-package resp
+package redisprotocol
 
 import (
 	"errors"
@@ -37,7 +37,7 @@ type RedisArray struct {
 }
 
 func EncodeStr(value RedisStr) (string, error) {
-	return fmt.Sprintf("+%s%s%s", CRLF, value.Value, CRLF), nil
+	return fmt.Sprintf("+%s%s", value.Value, CRLF), nil
 }
 
 func EncodeInt(value RedisInt) (string, error) {
@@ -92,7 +92,7 @@ func Encode(value interface{}) (string, error) {
 func DecodeStr(s string) (RedisStr, error, int) {
 	crlfpos := strings.Index(s, CRLF)
 	if crlfpos < 0 {
-		return RedisStr{}, errors.New("invalid string"), -2
+		return RedisStr{}, errors.New(fmt.Sprintf("invalid string %s", s)), -2
 	}
 	return RedisStr{Value: s[1:crlfpos]}, nil, crlfpos + len(CRLF)
 }
@@ -132,7 +132,7 @@ func DecodeBulkStr(s string) (RedisBulkStr, error, int) {
 	}
 	nextcrlf := strings.Index(s[crlfpos+len(CRLF):], CRLF)
 	bulk := s[crlfpos+len(CRLF) : crlfpos+nextcrlf+len(CRLF)]
-	return RedisBulkStr{Value: bulk}, nil, crlfpos + bulklen + len(CRLF) + 1
+	return RedisBulkStr{Value: bulk}, nil, crlfpos + bulklen + len(CRLF)
 }
 
 func DecodeArray(s string) (RedisArray, error, int) {
@@ -219,7 +219,7 @@ func Decode(s string) (interface{}, error, int) {
 			i += iplus
 			return res, nil, i
 		default:
-			return nil, errors.New("invalid string"), -2
+			i += 1
 		}
 
 	}
